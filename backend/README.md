@@ -87,6 +87,7 @@ JWT_SECRET=tu_clave_secreta_muy_segura_aqui
 **Importante:**
 - `PORT`: Puerto donde se ejecutará el servidor (por defecto: 3000)
 - `JWT_SECRET`: Clave secreta para firmar los tokens JWT (usa una clave fuerte en producción)
+- **El puerto debe ser el mismo en el archivo init.js del frontend**
 
 ### Iniciar el Servidor
 
