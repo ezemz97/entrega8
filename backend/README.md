@@ -2,6 +2,11 @@
 
 Backend completo para el eCommerce **eMercado** implementado con arquitectura **MVC** (Model-View-Controller), autenticación JWT y persistencia de datos en archivos JSON.
 
+> **📌 Estado del Proyecto:** Refactorizado a arquitectura MVC modular  
+> **🔧 Puerto configurado:** 3000 (definido en `.env`)  
+> **🔐 Autenticación:** JWT con expiración de 24 horas  
+> **💾 Almacenamiento:** Archivos JSON (migrable a BD)
+
 ---
 
 ## 📋 Tabla de Contenidos
@@ -9,6 +14,7 @@ Backend completo para el eCommerce **eMercado** implementado con arquitectura **
 - [Descripción General](#-descripción-general)
 - [Características Principales](#-características-principales)
 - [Instalación y Configuración](#-instalación-y-configuración)
+- [Refactorización a Arquitectura MVC](#-refactorización-a-arquitectura-mvc)
 - [Arquitectura del Sistema](#-arquitectura-del-sistema)
 - [¿Cómo Funciona?](#-cómo-funciona)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
@@ -18,6 +24,8 @@ Backend completo para el eCommerce **eMercado** implementado con arquitectura **
 - [Almacenamiento de Datos](#-almacenamiento-de-datos)
 - [Integración con Frontend](#-integración-con-frontend)
 - [Tecnologías Utilizadas](#-tecnologías-utilizadas)
+- [Próximos Pasos y Mejoras Recomendadas](#-próximos-pasos-y-mejoras-recomendadas)
+- [Soporte y Contacto](#-soporte-y-contacto)
 
 ---
 
@@ -77,17 +85,17 @@ npm install
 
 ### Configuración de Variables de Entorno
 
-Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
+Crea un archivo `.env` en la raíz del proyecto backend con el siguiente contenido:
 
 ```env
 PORT=3000
-JWT_SECRET=tu_clave_secreta_muy_segura_aqui
+JWT_SECRET=clave_super_secreta
 ```
 
 **Importante:**
-- `PORT`: Puerto donde se ejecutará el servidor (por defecto: 3000)
-- `JWT_SECRET`: Clave secreta para firmar los tokens JWT (usa una clave fuerte en producción)
-- **El puerto debe ser el mismo en el archivo init.js del frontend**
+- `PORT`: Puerto donde se ejecutará el servidor (configurado en **3000**)
+- `JWT_SECRET`: Clave secreta para firmar los tokens JWT (cambia esto en producción por una clave más robusta)
+- **⚠️ CRÍTICO**: El puerto configurado aquí (3000) **DEBE** coincidir con el puerto definido en `frontend/js/init.js` en la variable `API_PORT`
 
 ### Iniciar el Servidor
 
@@ -100,6 +108,50 @@ npm run dev
 ```
 
 El servidor estará disponible en `http://localhost:3000` (o el puerto configurado en `.env`).
+
+---
+
+## 🔧 Refactorización a Arquitectura MVC
+
+Este proyecto ha sido **refactorizado** desde una estructura monolítica a una arquitectura MVC completa y modular.
+
+### ¿Qué se Refactorizó?
+
+**Antes:** Todo el código estaba centralizado en archivos grandes con múltiples responsabilidades mezcladas.
+
+**Después:** Separación clara en tres capas:
+
+#### 📂 **Models** (Modelos)
+Cada recurso tiene su propio modelo que maneja el acceso a datos:
+- `authModel.js` - Gestión de usuarios y autenticación
+- `catsModel.js` - Lectura de categorías
+- `productsModel.js` - Detalles de productos
+- `cartModel.js` - Gestión de carritos
+- Y más...
+
+#### 🎮 **Controllers** (Controladores)
+Cada recurso tiene su controlador con la lógica de negocio:
+- `authController.js` - Login y validación
+- `registerController.js` - Registro de usuarios
+- `catsController.js` - Lógica de categorías
+- `productsController.js` - Lógica de productos
+- Y más...
+
+#### 🛣️ **Routes** (Rutas)
+Cada endpoint tiene su archivo de rutas:
+- `login.js` - Ruta de autenticación
+- `register.js` - Ruta de registro
+- `cats.js` - Rutas de categorías
+- `products.js` - Rutas de productos
+- Y más...
+
+### Beneficios de la Refactorización
+
+✅ **Código más limpio y organizado**
+✅ **Fácil de mantener y extender**
+✅ **Cada archivo tiene una responsabilidad única**
+✅ **Mejor reutilización de código**
+✅ **Facilita el trabajo en equipo**
 
 ---
 
@@ -432,6 +484,8 @@ Autentica un usuario y devuelve un token JWT.
 | GET | `/api/user_cart/:id.json` | Carrito de un usuario | `curl http://localhost:3000/api/user_cart/25801.json` |
 | GET | `/api/sell/publish.json` | Información de publicación | `curl http://localhost:3000/api/sell/publish.json` |
 
+**Nota:** Todas las URLs usan `localhost:3000` según el puerto configurado en `.env`
+
 **Ejemplo de uso con curl:**
 ```bash
 # Obtener todas las categorías
@@ -446,12 +500,15 @@ curl http://localhost:3000/api/products/50921.json
 
 **Ejemplo de uso con JavaScript (fetch):**
 ```javascript
+// Usando el puerto configurado (3000)
+const API_BASE_URL = 'http://localhost:3000';
+
 // Obtener categorías
-const response = await fetch('http://localhost:3000/api/cats/cat.json');
+const response = await fetch(`${API_BASE_URL}/api/cats/cat.json`);
 const categories = await response.json();
 
 // Obtener productos de una categoría
-const products = await fetch('http://localhost:3000/api/cats_products/101.json')
+const products = await fetch(`${API_BASE_URL}/api/cats_products/101.json`)
   .then(res => res.json());
 ```
 
@@ -638,20 +695,40 @@ await Model.delete(id);
 
 El backend está configurado con **CORS** habilitado, permitiendo peticiones desde cualquier origen durante desarrollo.
 
-**En el frontend, configura la URL base:**
+**En el frontend, configura la URL base en `frontend/js/init.js`:**
 
 ```javascript
-// frontend/js/init.js o similar
-const API_PORT = 3000;  // Debe coincidir con backend/.env PORT
+// frontend/js/init.js
+// IMPORTANTE: Si cambias el puerto en backend/.env, actualiza API_PORT aquí
+const API_PORT = 3000; // Puerto del backend (debe coincidir con backend/.env PORT)
 const API_BASE_URL = `http://localhost:${API_PORT}/api`;
+
+// URLs centralizadas de la API
+const API_URLS = {
+  CATEGORIES: `${API_BASE_URL}/cats/cat.json`,
+  CATEGORY_PRODUCTS: (catId) => `${API_BASE_URL}/cats_products/${catId}.json`,
+  PRODUCT: (productId) => `${API_BASE_URL}/products/${productId}.json`,
+  PRODUCT_COMMENTS: (productId) => `${API_BASE_URL}/products_comments/${productId}.json`,
+  CART: `${API_BASE_URL}/cart/buy.json`,
+  USER_CART: (userId) => `${API_BASE_URL}/user_cart/${userId}.json`,
+  PUBLISH: `${API_BASE_URL}/sell/publish.json`
+};
 ```
+
+**⚠️ Importante:** 
+- Si cambias el puerto en `backend/.env`, **DEBES** actualizar `API_PORT` en `frontend/js/init.js`
+- Todas las URLs de la API están centralizadas en el objeto `API_URLS` para facilitar el mantenimiento
+- Usa las funciones del objeto `API_URLS` en lugar de hardcodear URLs en tu código
 
 ### Ejemplo de Uso Completo
 
 ```javascript
+// Configuración base (debe coincidir con backend/.env PORT)
+const API_BASE_URL = 'http://localhost:3000';
+
 // 1. Registro de usuario
 async function register(email, password) {
-  const response = await fetch('http://localhost:3000/register', {
+  const response = await fetch(`${API_BASE_URL}/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -663,7 +740,7 @@ async function register(email, password) {
 
 // 2. Login y guardar token
 async function login(email, password) {
-  const response = await fetch('http://localhost:3000/login', {
+  const response = await fetch(`${API_BASE_URL}/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -681,7 +758,7 @@ async function login(email, password) {
 
 // 3. Obtener categorías (público)
 async function getCategories() {
-  const response = await fetch(`${API_BASE_URL}/cats/cat.json`);
+  const response = await fetch(`${API_BASE_URL}/api/cats/cat.json`);
   return await response.json();
 }
 
@@ -689,7 +766,7 @@ async function getCategories() {
 async function getProtectedData() {
   const token = localStorage.getItem('token');
   
-  const response = await fetch('http://localhost:3000/api/protected', {
+  const response = await fetch(`${API_BASE_URL}/api/protected`, {
     headers: {
       'Authorization': `Bearer ${token}`
     }
@@ -760,17 +837,53 @@ Para autenticación, el middleware verifica el token JWT antes de permitir acces
 
 ---
 
-## 📚 Próximos Pasos (Mejoras Futuras)
+## 📚 Próximos Pasos y Mejoras Recomendadas
 
-- [ ] Implementar hash de contraseñas con bcrypt
-- [ ] Agregar validación más robusta con Joi o express-validator
-- [ ] Migrar de JSON a base de datos (MongoDB/PostgreSQL)
-- [ ] Implementar refresh tokens
-- [ ] Agregar rate limiting
-- [ ] Implementar logging con Winston
-- [ ] Agregar tests unitarios e integración
-- [ ] Documentación con Swagger/OpenAPI
+### 🔒 Seguridad
+- [ ] **Implementar hash de contraseñas con bcrypt** - Actualmente las contraseñas se almacenan en texto plano
+- [ ] **Implementar refresh tokens** - Para mejorar la seguridad de la autenticación
+- [ ] **Agregar rate limiting** - Prevenir ataques de fuerza bruta
+- [ ] **Validación de entrada robusta** - Usar Joi o express-validator
+
+### 💾 Base de Datos
+- [ ] **Migrar de JSON a base de datos** - MongoDB o PostgreSQL para mejor escalabilidad
+- [ ] **Implementar transacciones** - Para operaciones críticas como compras
+- [ ] **Agregar índices** - Para mejorar el rendimiento de consultas
+
+### 📊 Monitoreo y Logging
+- [ ] **Implementar logging con Winston** - Para mejor debugging y auditoría
+- [ ] **Agregar métricas de rendimiento** - Monitorear tiempos de respuesta
+- [ ] **Sistema de alertas** - Notificaciones de errores críticos
+
+### 🧪 Testing
+- [ ] **Tests unitarios** - Para modelos y controladores
+- [ ] **Tests de integración** - Para endpoints de la API
+- [ ] **Tests end-to-end** - Para flujos completos de usuario
+
+### 📖 Documentación
+- [ ] **Documentación con Swagger/OpenAPI** - API docs interactivas
+- [ ] **Postman Collection** - Para facilitar el testing manual
+- [ ] **Diagramas de flujo** - Visualizar procesos complejos
+
+### 🚀 Funcionalidades
+- [ ] **Sistema de roles y permisos** - Admin, vendedor, comprador
+- [ ] **Notificaciones en tiempo real** - WebSockets para actualizaciones
+- [ ] **Sistema de búsqueda avanzada** - Filtros y ordenamiento
+- [ ] **Paginación** - Para listas grandes de productos
 
 ---
 
 **Desarrollado con ❤️ para eMercado**
+
+---
+
+## 📞 Soporte y Contacto
+
+Si tienes preguntas o encuentras algún problema:
+
+1. **Revisa la documentación** - Este README cubre la mayoría de casos de uso
+2. **Verifica la configuración** - Asegúrate que el puerto en `.env` coincida con `frontend/js/init.js`
+3. **Revisa los logs** - El servidor muestra información útil en la consola
+4. **Consulta los ejemplos** - Hay ejemplos de uso en cada sección
+
+---
