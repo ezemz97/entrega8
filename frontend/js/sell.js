@@ -1,4 +1,4 @@
-const PUBLISH_PRODUCT_URL = "https://japceibal.github.io/emercado-api/sell/publish.json";
+const PUBLISH_PRODUCT_URL = API_URLS.PUBLISH;
 
 let productCost = 0;
 let productCount = 0;

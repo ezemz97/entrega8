@@ -1,5 +1,5 @@
 const productID = localStorage.getItem("productID");
-const url = `https://japceibal.github.io/emercado-api/products/${productID}.json`;
+const url = API_URLS.PRODUCT(productID);
 
 let comentariosAPI = [];
 let comentariosUsuario = [];
@@ -55,7 +55,7 @@ function cargarProducto() {
 }
 
 function cargarComentariosAPI() {
-  fetch(`https://japceibal.github.io/emercado-api/products_comments/${productID}.json`)
+  fetch(API_URLS.PRODUCT_COMMENTS(productID))
     .then(res => res.json())
     .then(comments => {
       comentariosAPI = comments;

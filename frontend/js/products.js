@@ -1,5 +1,5 @@
 const catID = localStorage.getItem("catID");
-const url = `https://japceibal.github.io/emercado-api/cats_products/${catID}.json`;
+const url = API_URLS.CATEGORY_PRODUCTS(catID);
 
 const contenedor = document.getElementById("catalogo");
 const tituloCategoria = document.getElementById("titulo-categoria");
