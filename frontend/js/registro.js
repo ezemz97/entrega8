@@ -167,7 +167,7 @@ formRegistro.addEventListener("submit", async (e) => {
     
     // Verificar si es un error de conexión
     if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.name === 'TypeError') {
-      regMessage.textContent = "No se pudo conectar con el servidor. Verifica que el backend esté corriendo en http://localhost:3000";
+      regMessage.textContent = "No se pudo conectar con el servidor. Verifica que el backend esté corriendo en http://localhost:PUERTO_DEFINIDO";
     } else {
       regMessage.textContent = `Error al conectar con el servidor: ${error.message}`;
     }

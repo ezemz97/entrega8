@@ -59,7 +59,7 @@ formLogin.addEventListener("submit", async (e) => {
     
     // Verificar si es un error de conexión (backend no disponible)
     if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-      alert("No se pudo conectar con el servidor. Por favor, asegúrate de que el backend esté corriendo en http://localhost:3000");
+      alert("No se pudo conectar con el servidor. Por favor, asegúrate de que el backend esté corriendo en http://localhost:PUERTO_DEFINIDO");
     } else {
       alert("Error al conectar con el servidor. Por favor, intenta nuevamente.");
     }
