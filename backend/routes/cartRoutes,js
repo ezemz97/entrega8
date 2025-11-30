@@ -1,0 +1,10 @@
+// backend/routes/cartRoutes.js
+import { Router } from "express";
+import * as cartController from "../controller/cartController.js";
+import { verifyToken } from "../middleware/authMiddleware.js"; // adapta el nombre si es otro
+
+const router = Router();
+
+router.post("/", verifyToken, cartController.createCart);
+
+export default router;

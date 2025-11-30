@@ -3,12 +3,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const subtotalElem = document.getElementById("subtotal");
   const envioCostoElem = document.getElementById("envio-costo");
   const totalElem = document.getElementById("total");
-  
+
   // Verificar si viene de "comprar ahora" o del carrito
   const compraDirectJSON = localStorage.getItem("compraDirect");
   let carrito = [];
   let esCompraDirecta = false;
-  
+
   if (compraDirectJSON) {
     // Viene de "comprar ahora" - usar solo ese producto
     carrito = JSON.parse(compraDirectJSON);
@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Actualizar costos
   const actualizarCostos = () => {
     const subtotal = calcularSubtotal();
-    
+
     if (subtotalElem) {
       subtotalElem.textContent = `Subtotal: $${subtotal.toFixed(2)}`;
     }
@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
     radio.addEventListener("change", () => {
       const camposTarjeta = document.getElementById("campos-tarjeta");
       const camposTransferencia = document.getElementById("campos-transferencia");
-      
+
       if (radio.value === "tarjeta") {
         camposTarjeta.style.display = "block";
         camposTransferencia.style.display = "none";
@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Validación del formulario
   if (form) {
-    form.addEventListener("submit", (e) => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
       e.stopPropagation();
 
@@ -201,8 +201,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (hayErrores) return;
 
       const subtotal = calcularSubtotal();
-      const porcentajeEnvio = tipoEnvio.value === "premium" ? 0.15 : 
-                              tipoEnvio.value === "express" ? 0.07 : 0.05;
+      const porcentajeEnvio = tipoEnvio.value === "premium" ? 0.15 :
+        tipoEnvio.value === "express" ? 0.07 : 0.05;
       const costoEnvio = subtotal * porcentajeEnvio;
       const total = subtotal + costoEnvio;
 
@@ -236,14 +236,71 @@ document.addEventListener("DOMContentLoaded", () => {
         fecha: new Date().toISOString()
       };
 
-      localStorage.setItem("datosEnvio", JSON.stringify(datosEnvio));
-      
-      // Solo vaciar carrito si vino del carrito (no de compra directa)
-      if (!esCompraDirecta) {
-        localStorage.removeItem("cartItems");
+      // --- INTEGRACIÓN CON BACKEND ---
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Debes iniciar sesión para realizar una compra.");
+        window.location.href = "login.html";
+        return;
       }
-      
-      window.location.href = "compra-exitosa.html";
+
+      // Mapeo de tipo de envío a ID (según seed_shipping.sql)
+      // Standard=1, Express=2, Premium=3
+      let shippingTypeId = 1;
+      if (tipoEnvio.value === "express") shippingTypeId = 2;
+      else if (tipoEnvio.value === "premium") shippingTypeId = 3;
+
+      const payload = {
+        items: carrito, // El backend espera items con {id, count, unitCost}
+        shippingTypeId: shippingTypeId,
+        paymentMethod: formaPago.value,
+        paymentData: datosPago,
+        address: {
+          departamento,
+          localidad: "Montevideo", // Valor por defecto o agregar campo
+          calle,
+          numero: numerodepuerta,
+          esquina
+        }
+      };
+
+      // Mostrar spinner o deshabilitar botón
+      const btnSubmit = form.querySelector('button[type="submit"]');
+      const originalText = btnSubmit.textContent;
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = "Procesando...";
+
+      try {
+        const response = await fetch("http://localhost:3000/api/cart", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Éxito
+          localStorage.setItem("datosEnvio", JSON.stringify(datosEnvio));
+
+          // Solo vaciar carrito si vino del carrito (no de compra directa)
+          if (!esCompraDirecta) {
+            localStorage.removeItem("cartItems");
+          }
+
+          window.location.href = "compra-exitosa.html";
+        } else {
+          throw new Error(data.message || "Error al procesar la compra");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Hubo un error al procesar tu compra: " + error.message);
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = originalText;
+      }
     });
   }
 });
