@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Validación del formulario
   if (form) {
-    form.addEventListener("submit", async (e) => {
+    form.addEventListener("submit", (e) => {
       e.preventDefault();
       e.stopPropagation();
 
@@ -236,54 +236,24 @@ document.addEventListener("DOMContentLoaded", () => {
         fecha: new Date().toISOString()
       };
 
-      // --- INTEGRACIÓN CON BACKEND ---
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Debes iniciar sesión para realizar una compra.");
-        window.location.href = "login.html";
-        return;
-      }
+      // Enviar datos al backend
+      fetch('http://localhost:3000/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(datosEnvio)
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Error en la respuesta del servidor');
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Compra exitosa:', data);
 
-      // Mapeo de tipo de envío a ID (según seed_shipping.sql)
-      // Standard=1, Express=2, Premium=3
-      let shippingTypeId = 1;
-      if (tipoEnvio.value === "express") shippingTypeId = 2;
-      else if (tipoEnvio.value === "premium") shippingTypeId = 3;
-
-      const payload = {
-        items: carrito, // El backend espera items con {id, count, unitCost}
-        shippingTypeId: shippingTypeId,
-        paymentMethod: formaPago.value,
-        paymentData: datosPago,
-        address: {
-          departamento,
-          localidad: "Montevideo", // Valor por defecto o agregar campo
-          calle,
-          numero: numerodepuerta,
-          esquina
-        }
-      };
-
-      // Mostrar spinner o deshabilitar botón
-      const btnSubmit = form.querySelector('button[type="submit"]');
-      const originalText = btnSubmit.textContent;
-      btnSubmit.disabled = true;
-      btnSubmit.textContent = "Procesando...";
-
-      try {
-        const response = await fetch("http://localhost:3000/api/cart", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          // Éxito
+          // Guardar datos para mostrar en la página de éxito (opcional, si se mantiene la lógica actual)
           localStorage.setItem("datosEnvio", JSON.stringify(datosEnvio));
 
           // Solo vaciar carrito si vino del carrito (no de compra directa)
@@ -292,15 +262,11 @@ document.addEventListener("DOMContentLoaded", () => {
           }
 
           window.location.href = "compra-exitosa.html";
-        } else {
-          throw new Error(data.message || "Error al procesar la compra");
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        alert("Hubo un error al procesar tu compra: " + error.message);
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = originalText;
-      }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Hubo un error al procesar su compra. Por favor, intente nuevamente.');
+        });
     });
   }
 });
